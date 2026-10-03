@@ -1,6 +1,6 @@
 import React from "react";
 import { Composition, Still, staticFile } from "remotion";
-import { DEMO_LOOK } from "./lib/look";
+import { DEFAULT_LOOK } from "./lib/look";
 import { ChipOverlay, type ChipOverlayProps } from "./ChipOverlay";
 import { DemoClip, type DemoClipProps } from "./DemoClip";
 import { HudOverlay, type HudOverlayProps } from "./HudOverlay";
@@ -53,7 +53,7 @@ export const RemotionRoot: React.FC = () => {
             // absent, this falls through to a reel's DEFAULT_STYLE and the
             // preview quietly loses the camera and the backdrop — which makes
             // Studio agree with a broken render instead of catching it.
-            look: DEMO_LOOK,
+            look: DEFAULT_LOOK,
           } satisfies DemoClipProps
         }
         calculateMetadata={async ({ props }) => {

@@ -208,6 +208,86 @@ const StyledInline: React.FC<{ text: string; look: IntroLook }> = ({
  * the reference's own bookend (41.4% of frame width, 33.0% of height, a third
  * line carrying the URL) and REJECTED on how it looked. One row is the lockup.
  */
+
+/**
+ * Brand wordmark next to the mark. CourseWright gets the product lockup:
+ * green #33604d ink, with an amber #d98a3d underline under "Wright" only.
+ * Any other string still writes character-by-character in the card ink.
+ */
+const CW_GREEN = "#33604d";
+const CW_AMBER = "#d98a3d";
+
+const BrandWordmark: React.FC<{
+  text: string;
+  look: IntroLook;
+  k: number;
+  tS: number;
+  writeStart: number;
+  fullbleed?: boolean;
+}> = ({ text, look, k, tS, writeStart, fullbleed = false }) => {
+  const base: React.CSSProperties = {
+    display: "flex",
+    alignItems: "baseline",
+    fontSize: LOGO_TEXT_SIZE * k,
+    fontWeight: 600,
+    letterSpacing: fullbleed ? FULLBLEED_LETTER_SPACING : "-0.022em",
+    whiteSpace: "nowrap",
+  };
+  const isCourseWright =
+    /^course\s*wright$/i.test(text.replace(/\s+/g, " ").trim()) ||
+    text.replace(/\s+/g, "") === "CourseWright";
+
+  if (isCourseWright) {
+    // Reveal as two units so the amber underline never paints mid-glyph.
+    const courseP = cameraEase(
+      progressAt(
+        { startS: writeStart, endS: writeStart + WRITE_CHAR_IN * 6 },
+        tS,
+      ),
+    );
+    const wrightP = cameraEase(
+      progressAt(
+        {
+          startS: writeStart + WRITE_CHAR_STAGGER * 6,
+          endS: writeStart + WRITE_CHAR_STAGGER * 6 + WRITE_CHAR_IN * 6,
+        },
+        tS,
+      ),
+    );
+    return (
+      <div style={{ ...base, color: CW_GREEN }}>
+        <span style={{ opacity: courseP }}>Course</span>
+        <span
+          style={{
+            opacity: wrightP,
+            marginLeft: "0.22em",
+            borderBottom: `${0.085 * LOGO_TEXT_SIZE * k}px solid ${CW_AMBER}`,
+            paddingBottom: `${0.06 * LOGO_TEXT_SIZE * k}px`,
+          }}
+        >
+          Wright
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ ...base, color: look.headline, fontWeight: HEADLINE_WEIGHT }}>
+      {[...text].map((ch, i) => {
+        const startS = writeStart + i * WRITE_CHAR_STAGGER;
+        const p = cameraEase(
+          progressAt({ startS, endS: startS + WRITE_CHAR_IN }, tS),
+        );
+        return (
+          <span key={`${i}-${ch}`} style={{ opacity: p, whiteSpace: "pre" }}>
+            {ch}
+          </span>
+        );
+      })}
+    </div>
+  );
+};
+
 const LogoLockup: React.FC<{
   text: string;
   look: IntroLook;
@@ -290,29 +370,7 @@ const LogoLockup: React.FC<{
           transform: `translateY(${markRise}px) scale(${markScale * soloScale})${markSpin}`,
         }}
       />
-      <div
-        style={{
-          display: "flex",
-          fontSize: LOGO_TEXT_SIZE * k,
-          fontWeight: HEADLINE_WEIGHT,
-          letterSpacing: fullbleed ? FULLBLEED_LETTER_SPACING : "-0.022em",
-          // Comes from the palette in both looks now, so a light full-bleed
-          // bookend gets dark ink without a second branch. See introLook.
-          color: look.headline,
-        }}
-      >
-        {[...text].map((ch, i) => {
-          const startS = writeStart + i * WRITE_CHAR_STAGGER;
-          const p = cameraEase(
-            progressAt({ startS, endS: startS + WRITE_CHAR_IN }, tS),
-          );
-          return (
-            <span key={`${i}-${ch}`} style={{ opacity: p, whiteSpace: "pre" }}>
-              {ch}
-            </span>
-          );
-        })}
-      </div>
+      <BrandWordmark text={text} look={look} k={k} tS={tS} writeStart={writeStart} fullbleed={fullbleed} />
     </div>
   );
 };
@@ -576,17 +634,52 @@ const SentenceCard: React.FC<IntroProps> = ({ intro }) => {
     >
       <div style={{ maxWidth: width * look.columnFrac, textAlign: "center" }}>
         {intro.logo ? (
-          // A logo card IS the lockup — mark + wordmark on one line, the wordmark
-          // written in. It replaces the normal wordmark/headline/subhead stack,
-          // so the headline copy ("Acme") becomes the lockup's text.
-          <LogoLockup
-            text={intro.headline}
-            look={look}
-            k={k}
-            tS={tS}
-            fullbleed={fullbleed}
-            solo={preset.bookend.markSolo}
-          />
+          // Brand lockup: mark + product wordmark. When a separate headline is
+          // authored alongside wordmark, keep the headline below the lockup so
+          // a card can say "Create your first course" under CourseWright.
+          <>
+            <LogoLockup
+              text={intro.wordmark ?? intro.headline}
+              look={look}
+              k={k}
+              tS={tS}
+              fullbleed={fullbleed}
+              solo={preset.bookend.markSolo}
+            />
+            {intro.wordmark ? (
+              <div
+                style={{
+                  marginTop: 36 * k,
+                  fontSize: preset.type.sizePx * k,
+                  fontWeight: HEADLINE_WEIGHT,
+                  letterSpacing: preset.type.letterSpacing,
+                  lineHeight: preset.type.lineHeight,
+                  color: look.headline,
+                  ...(fullbleed ? { textWrap: "balance" as const } : {}),
+                }}
+              >
+                {t.words.map((cue, i) => {
+                  const p = progressAt(cue, tS);
+                  return (
+                    <span
+                      key={`${cue.index}-${cue.word}`}
+                      style={{
+                        display: "inline-block",
+                        marginLeft: i === 0 || cue.tight ? 0 : "0.26em",
+                        opacity: cue.typed ? 1 : p,
+                        transform: cue.typed
+                          ? undefined
+                          : `translateY(${(1 - p) * RISE_EM}em)`,
+                        ...wordCss(emphasis ? cue.style : undefined, look),
+                      }}
+                    >
+                      {cue.typed ? <Typed text={cue.word} p={p} /> : cue.word}
+                    </span>
+                  );
+                })}
+              </div>
+            ) : null}
+          </>
         ) : (
           <>
             {intro.wordmark ? (

@@ -11,6 +11,7 @@ import { execFileSync } from "node:child_process";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { resolvePlaybackRate } from "../src/lib/click-log";
+import { DEFAULT_LOOK } from "../src/lib/look";
 import { outPath, outRel } from "./lib/out";
 
 const ROOT = path.resolve(import.meta.dirname, "..");
@@ -137,7 +138,7 @@ function main() {
       "render",
       "DemoClip",
       out,
-      `--props=${JSON.stringify({ name, speed, ...(backdrop ? { backdrop } : {}) })}`,
+      `--props=${JSON.stringify({ name, speed, look: DEFAULT_LOOK, ...(backdrop ? { backdrop } : {}) })}`,
       "--crf=16",
       `--gl=${gl}`,
       ...(concurrency != null ? [`--concurrency=${concurrency}`] : []),

@@ -213,6 +213,25 @@ async function main() {
       await runTour(ctx, replayTour);
     } else {
       if (!flow) throw new Error(`No flow file at flows/${name}.ts`);
+      const startUrl = flow.startUrl ?? baseURL;
+      if (!startUrl) {
+        throw new Error(
+          `flows/${name}.ts has no startUrl and APP_BASE_URL is not set.`,
+        );
+      }
+      await page.goto(startUrl, { waitUntil: "domcontentloaded" });
+      if (flow.ready) {
+        const deadline = Date.now() + 30_000;
+        while (Date.now() < deadline) {
+          if (await flow.ready(page).catch(() => false)) break;
+          await page.waitForTimeout(200);
+        }
+        if (!(await flow.ready(page).catch(() => false))) {
+          throw new Error(
+            `flows/${name}.ts never became ready at ${startUrl}`,
+          );
+        }
+      }
       await page.waitForTimeout(120);
       await flow.run(ctx);
     }

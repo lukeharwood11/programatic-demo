@@ -49,6 +49,7 @@ flows/*
 !flows/smoke.ts
 !flows/google-search.ts
 !flows/skillsmp-search.ts
+!flows/first-course.ts
 
 # Kept on purpose: public/backdrops/ are design assets, not pipeline output.
 !public/backdrops
@@ -57,11 +58,14 @@ flows/*
 # for the same reason the flows are: it is one company's logo, not the engine's.
 # Drop your own PNG here under this name.
 public/logo-mark.png
+# CourseWright's first-course intro uses this mark. Kept with that script.
+!public/logo-mark.png
 
 # Intro copy is per-demo the same way flows are: it names that account's
 # product and features. Same carve-out — the worked example is committed.
 intros/*
 !intros/smoke.ts
+!intros/first-course.ts
 
 # Reel storyboards name a specific demo's product surface, same as flows/ and
 # intros/. Nothing generic to commit yet.

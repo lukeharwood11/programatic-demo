@@ -67,7 +67,7 @@ const PAD = 80;
 const MENU_ROOM = 110;
 const FRAME_FRAC = 0.55;
 /** Subject sits this fraction of viewport width off centre, toward its native side. */
-const FRAME_OFFSET = 0.26;
+const FRAME_OFFSET = 0;
 /**
  * How far inside the frame edge a click is kept, as a fraction of the frame.
  *
